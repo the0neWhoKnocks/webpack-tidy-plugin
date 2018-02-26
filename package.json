@@ -1,0 +1,42 @@
+{
+  "name": "@noxx/webpack-tidy-plugin",
+  "version": "1.0.0",
+  "description": "Keeps your output directories tidy when outputting files in watch-mode.",
+  "main": "./src/TidyPlugin.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "eslint ./**/*.js && jest --config ./.jest/conf.jest.js",
+    "test:watch": "jest --config ./.jest/conf.jest.js --watchAll --no-watchman"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the0neWhoKnocks/webpack-tidy-plugin.git"
+  },
+  "keywords": [
+    "clean",
+    "manifest",
+    "noxx",
+    "plugin",
+    "server",
+    "tidy",
+    "webpack"
+  ],
+  "author": "Trevor Lemon",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/the0neWhoKnocks/webpack-tidy-plugin/issues"
+  },
+  "homepage": "https://github.com/the0neWhoKnocks/webpack-tidy-plugin#readme",
+  "dependencies": {
+    "cli-color": "^1.2.0",
+    "glob": "^7.1.2"
+  },
+  "devDependencies": {
+    "@noxx/eslint-config": "^1.0.1",
+    "eslint": "^4.18.1",
+    "jest": "^22.4.2",
+    "rimraf": "^2.6.2"
+  }
+}
