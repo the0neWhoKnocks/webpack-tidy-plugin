@@ -10,4 +10,4 @@ install:
   - npm install -g codecov
 
 after_success:
-  - npm run codecov
+  - codecov --file ./coverage/lcov.info --disable search
