@@ -1,6 +1,7 @@
 const path = require('path');
 
 const conf = {
+  automock: false,
   collectCoverage: true,
   collectCoverageFrom: [
     'src/**/*.{js}',
@@ -8,17 +9,18 @@ const conf = {
   ],
   coverageReporters: [
     'html',
+    'json',
+    'lcov',
     'text-summary',
   ],
-  // TODO - uncomment once tests are done
-  // coverageThreshold: {
-  //   global: {
-  //     branches: 100,
-  //     functions: 100,
-  //     lines: 100,
-  //     statements: 100,
-  //   },
-  // },
+  coverageThreshold: {
+    global: {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+  },
   moduleFileExtensions: [ 'js' ],
   rootDir: path.resolve(__dirname, '../'),
   roots: ['src'],

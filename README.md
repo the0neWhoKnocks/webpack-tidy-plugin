@@ -1,7 +1,9 @@
 # Webpack Tidy Plugin
 
-**TL;DR**
-Keeps your output directories tidy when outputting files in watch-mode.
+[![Build Status](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin.svg?branch=master)](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin)
+[![Coverage Status](https://coveralls.io/repos/github/the0neWhoKnocks/webpack-tidy-plugin/badge.svg?branch=master)](https://coveralls.io/github/the0neWhoKnocks/webpack-tidy-plugin?branch=master)
+
+**TL;DR** - Keeps your output directories tidy when outputting files in watch-mode.
 
 Imagine you have a project utilizing a node server that serves assets from a
 specific directory - **_and_** you want to use Webpack to rebuild bundles quickly
