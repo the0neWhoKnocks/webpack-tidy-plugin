@@ -1,7 +1,8 @@
 # Webpack Tidy Plugin
 
 [![Build Status](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin.svg?branch=master)](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin)
-[![Coverage Status](https://coveralls.io/repos/github/the0neWhoKnocks/webpack-tidy-plugin/badge.svg?branch=master)](https://coveralls.io/github/the0neWhoKnocks/webpack-tidy-plugin?branch=master)
+[![codecov](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin)
+[![Maintainability](https://api.codeclimate.com/v1/badges/303c4380e53765b2613a/maintainability)](https://codeclimate.com/github/the0neWhoKnocks/webpack-tidy-plugin/maintainability)
 
 **TL;DR** - Keeps your output directories tidy when outputting files in watch-mode.
 
