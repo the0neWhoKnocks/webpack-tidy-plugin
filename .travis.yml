@@ -1,0 +1,12 @@
+language: node_js
+
+node_js:
+  - "6.11.0"
+
+# Speeds up build time since it doesn't have to install the same packages again.
+cache:
+  directories:
+    - node_modules
+
+after_success:
+  - npm run coveralls

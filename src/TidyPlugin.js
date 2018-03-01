@@ -77,11 +77,7 @@ TidyPlugin.prototype = {
       // begins with a `/`.
       const paths = this.cleanPaths.split(' ')
         .map(currPath => currPath.replace(/"|'/g, ''))
-        .filter(currPath =>
-          currPath
-          && currPath.trim() !== ''
-          && !/^\/.*/.test(currPath)
-        );
+        .filter(currPath => currPath && !/^\/.*/.test(currPath) );
 
       if( !paths.length ) throw Error('No valid paths provided to delete');
 

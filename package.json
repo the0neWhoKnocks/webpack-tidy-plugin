@@ -7,6 +7,7 @@
     "example": "example"
   },
   "scripts": {
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
     "test": "eslint ./**/*.js && jest --config ./.jest/conf.jest.js",
     "test:watch": "jest --config ./.jest/conf.jest.js --watchAll --no-watchman"
   },
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@noxx/eslint-config": "^1.0.1",
+    "coveralls": "^3.0.0",
     "eslint": "^4.18.1",
     "jest": "^22.4.2",
     "rimraf": "^2.6.2"
