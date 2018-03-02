@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin.svg?branch=master)](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin)
 [![codecov](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin)
-[![npm version](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin.svg)](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin)
+[![npm version](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin.svg?cb=1)](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin)
 
 **TL;DR** - Keeps your output directories tidy when outputting files in watch-mode.
 
