@@ -3,9 +3,10 @@
 [![Build Status](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin.svg?branch=master)](https://travis-ci.org/the0neWhoKnocks/webpack-tidy-plugin)
 [![codecov](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin)
 [![npm version](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin.svg)](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin)
-[![Maintainability](https://api.codeclimate.com/v1/badges/303c4380e53765b2613a/maintainability)](https://codeclimate.com/github/the0neWhoKnocks/webpack-tidy-plugin/maintainability)
 
 **TL;DR** - Keeps your output directories tidy when outputting files in watch-mode.
+
+![wp-tidy-plugin-01](https://user-images.githubusercontent.com/344140/36881882-82d68602-1d85-11e8-8989-170c5b3f1ed9.gif)
 
 Imagine you have a project utilizing a node server that serves assets from a
 specific directory - **_and_** you want to use Webpack to rebuild bundles quickly
