@@ -1,1 +1,12 @@
+# Folders
+.assets/
+.jest/
+coverage/
+example/
+
+# Files
+.eslintignore
+.eslintrc.js
+.npmignore
 .travis.yml
+CONTRIBUTING.md
