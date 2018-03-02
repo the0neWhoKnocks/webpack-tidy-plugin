@@ -1,6 +1,6 @@
 {
   "name": "@noxx/webpack-tidy-plugin",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Keeps your output directories tidy when outputting files in watch-mode.",
   "main": "./src/TidyPlugin.js",
   "directories": {
