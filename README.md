@@ -21,6 +21,10 @@ production) you may have some straggling files from a previous dev session.
 This plugin will ensure that there's only ever one version of the current bundle
 in your output directories.
 
+**Note** - This only works when using the `watch` option for `webpack`, _not_
+while using the `webpack-dev-server`. This is due to the dev-server not
+emitting actual files, but rather keeping them in memory.
+
 ---
 
 ## Install
