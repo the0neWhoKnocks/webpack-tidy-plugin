@@ -28,7 +28,7 @@ const conf = {
     ],
   },
   output: {
-    filename: `./public/js/[name].[hash:${ hashLength }].js`,
+    filename: `./public/js/[name].[chunkhash:${ hashLength }].js`,
   },
   module: {
     rules: [
@@ -47,7 +47,7 @@ const conf = {
       hashLength,
       watching: flags.dev,
     }),
-    new ExtractTextPlugin(`./public/css/[name].[hash:${ hashLength }].css`),
+    new ExtractTextPlugin(`./public/css/[name].[chunkhash:${ hashLength }].css`),
     new WebpackAssetsManifest({
       customize: (key, val) => {
         return {

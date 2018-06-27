@@ -26,28 +26,32 @@ TidyPlugin.prototype = {
 
     if( this.watching ){
       compiler.plugin('after-emit', (compilation, cb) => {
-        const hash = compilation.hash.slice(0, this.hashLength);
+        for(let i=0; i<compilation.chunks.length; i++){
+          const chunk = compilation.chunks[i];
 
-        for(let fileName in compilation.assets){
-          const currFile = compilation.assets[fileName];
+          // if file was rendered, find it's older counterpart and kill it
+          if( chunk.rendered ){
+            const hash = chunk.hash.slice(0, this.hashLength);
 
-          // if file was emitted, find it's older counterpart and kill it
-          if( currFile.emitted && fileName.indexOf(hash) > -1 ){
-            const filePattern = fileName.replace(hash, '*');
-            const files = glob.sync(filePattern);
+            // account for all files types that were created
+            for(let f=0; f<chunk.files.length; f++){
+              const fileName = chunk.files[f];
+              const filePattern = fileName.replace(hash, '*');
+              const files = glob.sync(filePattern);
 
-            if( files.length ){
-              files.forEach((filePath) => {
-                if( filePath !== fileName ){
-                  try {
-                    fs.unlinkSync(filePath);
-                  }catch( err ) {
-                    throw err;
+              if( files.length ){
+                files.forEach((filePath) => {
+                  if( filePath !== fileName ){
+                    try {
+                      fs.unlinkSync(filePath);
+                    }catch( err ) {
+                      throw err;
+                    }
+
+                    console.log(`${ color.green.inverse(' DELETED ') } ${ filePath }`);
                   }
-
-                  console.log(`${ color.green.inverse(' DELETED ') } ${ filePath }`);
-                }
-              });
+                });
+              }
             }
           }
         }
