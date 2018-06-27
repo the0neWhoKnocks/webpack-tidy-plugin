@@ -79,7 +79,7 @@ describe('TidyPlugin', () => {
 
     beforeEach(() => {
       compilation = {
-        hash: randomHash(opts.hashLength),
+        chunks: [],
       };
       cb = jest.fn();
       tidyPlugin = new TidyPlugin(opts);
@@ -89,13 +89,10 @@ describe('TidyPlugin', () => {
 
     it("shouldn't try to delete anything if no assets were generated", () => {
       // =======================================================================
-      // no files emitted from WP
-
-      compilation.assets = {
-        [`${ outputDir }/app.${ compilation.hash }.js`]: {
-          emitted: false,
-        },
-      };
+      // no files rendered from WP
+      compilation.chunks = [{
+        rendered: false,
+      }];
 
       afterEmit(compilation, cb);
       expect( glob.sync ).not.toHaveBeenCalled();
@@ -104,13 +101,14 @@ describe('TidyPlugin', () => {
       // =======================================================================
       // the only file that exists is the one that was output, so no deletion
 
-      const fileName = `${ outputDir }/app.${ compilation.hash }.js`;
+      const hash = randomHash(opts.hashLength);
+      const fileName = `${ outputDir }/app.${ hash }.js`;
       glob.sync.mockReturnValue([fileName]);
-      compilation.assets = {
-        [fileName]: {
-          emitted: true,
-        },
-      };
+      compilation.chunks = [{
+        files: [fileName],
+        hash,
+        rendered: true,
+      }];
 
       fs.unlinkSync.mockReset();
       afterEmit(compilation, cb);
@@ -118,30 +116,41 @@ describe('TidyPlugin', () => {
     });
 
     it('should set up after-emit listener', () => {
-      const newFile = `${ outputDir }/app.${ compilation.hash }.js`;
+      const hash = randomHash(opts.hashLength);
+      const newFile = `${ outputDir }/app.${ hash }.js`;
+      const newFiles = [
+        newFile,
+        `${ newFile }.map`,
+      ];
       const origFiles = [
         `${ outputDir }/app.1234.js`,
+        `${ outputDir }/app.1234.js.map`,
         `${ outputDir }/app.5678.js`,
-        newFile,
+        `${ outputDir }/app.5678.js.map`,
+        ...newFiles,
       ];
       const deletedFiles = [];
-      compilation.assets = {
-        [`${ newFile }`]: {
-          emitted: true,
-        },
-      };
-      glob.sync.mockReturnValue(origFiles);
+      compilation.chunks = [{
+        files: newFiles,
+        hash,
+        rendered: true,
+      }];
+      glob.sync.mockImplementation(
+        (fileName) => origFiles.filter(
+          (file) => (new RegExp(`${ fileName }$`)).test(file)
+        )
+      );
       fs.unlinkSync.mockImplementation((filePath) => {
-        const fileNdx = origFiles.indexOf(filePath);
-        if( fileNdx > -1 ) deletedFiles.push(filePath);
+        if( origFiles.includes(filePath) ) deletedFiles.push(filePath);
       });
 
       // =======================================================================
       // check that only the new file remains
 
       afterEmit(compilation, () => {
-        expect( deletedFiles.length ).toBe(2);
-        expect( deletedFiles.indexOf(newFile) ).toBe(-1);
+        expect( deletedFiles.length ).toBe(4);
+        expect( deletedFiles.includes(newFile) ).toBe(false);
+        expect( deletedFiles.includes(`${ newFile }.map`) ).toBe(false);
       });
 
       // =======================================================================
@@ -150,8 +159,9 @@ describe('TidyPlugin', () => {
       glob.sync.mockReturnValue([]);
 
       afterEmit(compilation, () => {
-        expect( deletedFiles.length ).toBe(2);
-        expect( deletedFiles.indexOf(newFile) ).toBe(-1);
+        expect( deletedFiles.length ).toBe(4);
+        expect( deletedFiles.includes(newFile) ).toBe(false);
+        expect( deletedFiles.includes(`${ newFile }.map`) ).toBe(false);
       });
 
       // =======================================================================

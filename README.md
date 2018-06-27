@@ -88,7 +88,7 @@ const conf = {
   // ...
   output: {
     // make path relative
-    filename: `${ appConfig.paths.OUTPUT }/js/[name]_[hash:8].js`,
+    filename: `${ appConfig.paths.OUTPUT }/js/[name]_[chunkhash:8].js`,
   },
   plugins: [
     new TidyPlugin({
