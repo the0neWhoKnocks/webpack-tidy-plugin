@@ -1,3 +1,4 @@
+const { resolve } = require('path');
 const yargs = require('yargs');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
@@ -17,6 +18,7 @@ const flags = yargs.parse();
 
 // =============================================================================
 
+const PUBLIC_PATH = '/js/';
 const hashLength = 8;
 const conf = {
   entry: {
@@ -28,7 +30,9 @@ const conf = {
     ],
   },
   output: {
-    filename: `./public/js/[name].[chunkhash:${ hashLength }].js`,
+    path: `${ resolve(__dirname, './public') }${ PUBLIC_PATH }`,
+    publicPath: PUBLIC_PATH,
+    filename: `[name]_[chunkhash:${ hashLength }].js`,
   },
   module: {
     rules: [
@@ -43,9 +47,8 @@ const conf = {
   },
   plugins: [
     new TidyPlugin({
-      cleanPaths: './public/js/* ./public/css/*',
+      cleanOutput: true,
       hashLength,
-      watching: flags.dev,
     }),
     new ExtractTextPlugin(`./public/css/[name].[chunkhash:${ hashLength }].css`),
     new WebpackAssetsManifest({
