@@ -1,7 +1,6 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const color = require('cli-color');
 const glob = require('glob');
-const { exec } = require('child_process');
 
 /**
  * A plugin for Webpack that keeps source directories clean during a one-off
@@ -9,10 +8,9 @@ const { exec } = require('child_process');
  *
  * @param {Object} opts - Configuration options
  */
-const TidyPlugin = function({ cleanPaths, hashLength, watching }){
-  this.cleanPaths = cleanPaths;
+const TidyPlugin = function({ cleanOutput, hashLength }){
+  this.cleanOutput = cleanOutput;
   this.hashLength = hashLength;
-  this.watching = watching;
 };
 
 TidyPlugin.prototype = {
@@ -24,7 +22,18 @@ TidyPlugin.prototype = {
   apply: function(compiler){
     // List of event types - https://github.com/webpack/docs/wiki/plugins#the-compiler-instance
 
-    if( this.watching ){
+    // compiler.outputFileSystem - may be useful in determining what can run on
+    // a specific OS.
+
+    let outputPath = compiler.options.output.path;
+
+    if(!outputPath) throw Error('No output path found in the Webpack config.');
+    if(outputPath === '/') throw Error('Root is not a valid output path.');
+    if(!outputPath.endsWith('/')) outputPath += '/';
+
+    this.outputPath = outputPath;
+
+    if( compiler.options.watch ){
       compiler.plugin('after-emit', (compilation, cb) => {
         for(let i=0; i<compilation.chunks.length; i++){
           const chunk = compilation.chunks[i];
@@ -37,18 +46,18 @@ TidyPlugin.prototype = {
             for(let f=0; f<chunk.files.length; f++){
               const fileName = chunk.files[f];
               const filePattern = fileName.replace(hash, '*');
-              const files = glob.sync(filePattern);
+              const files = glob.sync(`${ outputPath }${ filePattern }`);
 
               if( files.length ){
                 files.forEach((filePath) => {
-                  if( filePath !== fileName ){
+                  if( !filePath.endsWith(fileName) ){
                     try {
                       fs.unlinkSync(filePath);
                     }catch( err ) {
                       throw err;
                     }
 
-                    console.log(`${ color.green.inverse(' DELETED ') } ${ filePath }`);
+                    console.log(`${ color.green.inverse(' DELETED ') } ${ fileName }`);
                   }
                 });
               }
@@ -73,28 +82,22 @@ TidyPlugin.prototype = {
    * have a callback called in order to proceed.
    */
   clean: function(cb){
-    if( this.cleanPaths ){
+    if( this.cleanOutput ){
+      if(!cb) throw Error('No callback provided for async event');
+
       // =======================================================================
-      // Ensure paths are relative
+      // Validate path
 
-      // This won't account for paths with spaces, but we only care if any path
-      // begins with a `/`.
-      const paths = this.cleanPaths.split(' ')
-        .map(currPath => currPath.replace(/"|'/g, ''))
-        .filter(currPath => currPath && !/^\/.*/.test(currPath) );
-
-      if( !paths.length ) throw Error('No valid paths provided to delete');
+      if( !fs.pathExistsSync(this.outputPath) )
+        throw Error(`Can't find the output path for cleaning. "${ this.outputPath }"`);
 
       // =======================================================================
       // Delete files
 
-      const cleanCmd = `rm -f ${ this.cleanPaths }`;
+      console.log(`${ color.green.inverse(' Clean ') } output dir`);
 
-      console.log(`${ color.green.inverse(' Clean ') } output dirs`);
-
-      exec(cleanCmd, (err, stdout, stderr) => {
+      fs.emptyDir(this.outputPath, (err) => {
         if(err) throw err;
-        if(!cb) throw Error('No callback provided for async event');
         cb();
       });
     }

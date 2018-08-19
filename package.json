@@ -1,6 +1,6 @@
 {
   "name": "@noxx/webpack-tidy-plugin",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "Keeps your output directories tidy when outputting files in watch-mode.",
   "main": "./src/TidyPlugin.js",
   "directories": {
@@ -31,13 +31,13 @@
   "homepage": "https://github.com/the0neWhoKnocks/webpack-tidy-plugin#readme",
   "dependencies": {
     "cli-color": "^1.2.0",
+    "fs-extra": "^7.0.0",
     "glob": "^7.1.2"
   },
   "devDependencies": {
     "@noxx/eslint-config": "^1.0.1",
     "coveralls": "^3.0.0",
     "eslint": "^4.18.1",
-    "jest": "^22.4.2",
-    "rimraf": "^2.6.2"
+    "jest": "^22.4.2"
   }
 }

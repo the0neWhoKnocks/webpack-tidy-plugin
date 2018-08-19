@@ -40,18 +40,16 @@ You can see how everything's hooked up in the [webpack.config.js file](./example
 ```js
 plugins: [
   new TidyPlugin({
-    cleanPaths: './public/js/* ./public/css/*',
+    cleanOutput: true,
     hashLength,
-    watching: true,
   }),
 ],
 ```
 
 | Prop         | Type      | Description |
 | ------------ | --------- | ----------- |
-| `cleanPaths` | `String`  | A string containing one or multiple (space separated) patterns for the `rm -f` command to run during a one-off build. |
+| `cleanOutput` | `Boolean`  | The output directory will be cleaned out during a one-off build. |
 | `hashLength` | `Number`  | The length of the hash in the bundle name. |
-| `watching`   | `Boolean` | Whether or not Webpack is watching for changes. |
 
 ---
 
@@ -61,20 +59,17 @@ plugins: [
 while using the `webpack-dev-server`. This is due to the dev-server not
 emitting actual files, but rather keeping them in memory.
 
-- This plugin utilizes `glob`, so it's dependent on matching path structures. By
-that, I mean if you configure the plugin with `cleanPaths: './dist/js/*'`, then
-the `filename` in `output` should start with `./dist/js` so that it can
-accurately locate and match files.
-
 Note that in the below example, I'm not using `path` in the `output`. The full
 path should be in `filename`, otherwise the proper data isn't passed along to
 the `emit` event.
 
 ```js
 // conf.js (at root)
+const { resolve } = require('path');
+
 const conf = {
   paths: {
-    OUTPUT: './dist',
+    OUTPUT: resolve(__dirname, './dist'),
   },
 };
 
@@ -84,18 +79,19 @@ const conf = {
 const appConfig = require('./conf');
 const TidyPlugin = require('@noxx/webpack-tidy-plugin');
 
+const PUBLIC_PATH = '/js/';
+const hashLength = 8;
 const conf = {
   // ...
   output: {
-    // make path relative
-    filename: `${ appConfig.paths.OUTPUT }/js/[name]_[chunkhash:8].js`,
+    path: `${ appConfig.paths.OUTPUT }${ PUBLIC_PATH }`,
+    publicPath: PUBLIC_PATH,
+    filename: `[name]_[chunkhash:${ hashLength }].js`,
   },
   plugins: [
     new TidyPlugin({
-      // make path relative
-      cleanPaths: `${ appConfig.paths.OUTPUT }/js/*`,
+      cleanOutput: true,
       hashLength,
-      watching: process.env.NODE_ENV === 'development',
     }),
   ],
 };

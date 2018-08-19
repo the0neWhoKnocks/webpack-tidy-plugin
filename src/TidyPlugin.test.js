@@ -15,31 +15,33 @@ function randomHash(hashLength){
 }
 
 describe('TidyPlugin', () => {
-  let outputDir = './fake/output/path';
-  let glob, fs, TidyPlugin, compiler, opts, eventCallbacks, tidyPlugin, cb,
-    childProcess;
+  let outputDir = '/fake/output/path/';
+  let glob, fs, TidyPlugin, compiler, opts, eventCallbacks, tidyPlugin, cb;
 
   beforeEach(() => {
     // This has to be done to ensure mocks are generated no matter the functions context.
     jest.resetModules();
     jest.doMock('glob', () => jest.genMockFromModule('glob'));
-    jest.doMock('fs', () => jest.genMockFromModule('fs'));
-    jest.doMock('child_process', () => jest.genMockFromModule('child_process'));
+    jest.doMock('fs-extra', () => jest.genMockFromModule('fs-extra'));
     glob = require('glob');
-    fs = require('fs');
-    childProcess = require('child_process');
+    fs = require('fs-extra');
     TidyPlugin = require('./TidyPlugin');
 
     eventCallbacks = {};
     compiler = {
+      options: {
+        output: {
+          path: outputDir,
+        },
+        watch: true,
+      },
       plugin: (type, cb) => {
         eventCallbacks[type] = cb;
       },
     };
     opts = {
-      cleanPaths: './public/js/* ./public/css/*',
+      cleanOutput: true,
       hashLength: 8,
-      watching: true,
     };
   });
 
@@ -55,6 +57,35 @@ describe('TidyPlugin', () => {
     }
   });
 
+  it('should throw an error if no output path was found', () => {
+    compiler.options.output.path = undefined;
+
+    tidyPlugin = new TidyPlugin(opts);
+
+    expect(() => { tidyPlugin.apply(compiler); }).toThrow(
+      'No output path found in the Webpack config.'
+    );
+  });
+
+  it('should throw an error if the output path is the root filesystem', () => {
+    compiler.options.output.path = '/';
+
+    tidyPlugin = new TidyPlugin(opts);
+
+    expect(() => { tidyPlugin.apply(compiler); }).toThrow(
+      'Root is not a valid output path.'
+    );
+  });
+
+  it("should append a slash to the output path if one isn't present", () => {
+    compiler.options.output.path = '/some/path';
+
+    tidyPlugin = new TidyPlugin(opts);
+    tidyPlugin.apply(compiler);
+
+    expect(tidyPlugin.outputPath.endsWith('/')).toBe(true);
+  });
+
   it('should set up "after-emit" listener', () => {
     tidyPlugin = new TidyPlugin(opts);
     tidyPlugin.apply(compiler);
@@ -63,7 +94,7 @@ describe('TidyPlugin', () => {
   });
 
   it('should set up "run" listener', () => {
-    opts.watching = false;
+    compiler.options.watch = false;
 
     tidyPlugin = new TidyPlugin(opts);
     tidyPlugin.apply(compiler);
@@ -115,18 +146,18 @@ describe('TidyPlugin', () => {
       expect( fs.unlinkSync ).not.toHaveBeenCalled();
     });
 
-    it('should set up after-emit listener', () => {
+    it('should delete files of the same name but with a non-matching hash', () => {
       const hash = randomHash(opts.hashLength);
-      const newFile = `${ outputDir }/app.${ hash }.js`;
+      const newFile = `app.${ hash }.js`;
       const newFiles = [
         newFile,
         `${ newFile }.map`,
       ];
       const origFiles = [
-        `${ outputDir }/app.1234.js`,
-        `${ outputDir }/app.1234.js.map`,
-        `${ outputDir }/app.5678.js`,
-        `${ outputDir }/app.5678.js.map`,
+        'app.1234.js',
+        'app.1234.js.map',
+        'app.5678.js',
+        'app.5678.js.map',
         ...newFiles,
       ];
       const deletedFiles = [];
@@ -137,7 +168,7 @@ describe('TidyPlugin', () => {
       }];
       glob.sync.mockImplementation(
         (fileName) => origFiles.filter(
-          (file) => (new RegExp(`${ fileName }$`)).test(file)
+          (file) => (new RegExp(`${ fileName }$`)).test(`${ outputDir }${ file }`)
         )
       );
       fs.unlinkSync.mockImplementation((filePath) => {
@@ -179,41 +210,48 @@ describe('TidyPlugin', () => {
   });
 
   describe('clean', () => {
+    let outputDir = '/fake/output/path/';
+
     beforeEach(() => {
       cb = jest.fn();
       tidyPlugin = new TidyPlugin(opts);
+      tidyPlugin.cleanOutput = true;
+      tidyPlugin.outputPath = outputDir;
     });
 
-    it("shouldn't do anything if no paths were provided", () => {
-      tidyPlugin.cleanPaths = undefined;
+    it("shouldn't do anything if not enabled", () => {
+      tidyPlugin.cleanOutput = false;
       tidyPlugin.clean(cb);
       expect( cb ).not.toHaveBeenCalled();
     });
 
-    it("should throw error if paths aren't valid", () => {
-      tidyPlugin.cleanPaths = '   ';
-      expect( () => { tidyPlugin.clean(cb); } ).toThrow();
-
-      tidyPlugin.cleanPaths = '/fu/bar /root/bad/path';
-      expect( () => { tidyPlugin.clean(cb); } ).toThrow();
+    it("should throw an error a callback wasn't passed for WP", () => {
+      expect( () => { tidyPlugin.clean(); } ).toThrow(
+        'No callback provided for async event'
+      );
     });
 
-    it('should remove files for specified paths', () => {
-      const badPath = '/root/bad/path/';
-      const goodPath = './fu/bar/';
-      let execCB;
-      tidyPlugin.cleanPaths = `${ badPath } ${ goodPath }`;
-      childProcess.exec.mockImplementation((cmd, eCB) => {
-        execCB = eCB;
+    it("should throw an error if paths aren't valid", () => {
+      fs.pathExistsSync.mockReturnValue(false);
+
+      expect( () => { tidyPlugin.clean(cb); } ).toThrow(
+        `Can't find the output path for cleaning. "${ tidyPlugin.outputPath }"`
+      );
+    });
+
+    it('should clean the output path', () => {
+      let doneCB;
+      fs.pathExistsSync.mockReturnValue(true);
+      fs.emptyDir.mockImplementation((oPath, cb) => {
+        doneCB = cb;
       });
 
       tidyPlugin.clean(cb);
-      execCB();
-      expect( cb ).toHaveBeenCalled();
-      expect( () => { execCB(new Error('fake error')); } ).toThrow();
+      doneCB();
 
-      tidyPlugin.clean();
-      expect( () => { execCB(); } ).toThrow();
+      expect(fs.emptyDir).toHaveBeenCalledWith(tidyPlugin.outputPath, doneCB);
+      expect( cb ).toHaveBeenCalled();
+      expect( () => { doneCB(new Error('fake error')); } ).toThrow();
     });
   });
 });
