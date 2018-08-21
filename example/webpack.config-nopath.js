@@ -1,5 +1,7 @@
 const { resolve } = require('path');
 const yargs = require('yargs');
+const webpack = require('webpack');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const TidyPlugin = require('@noxx/webpack-tidy-plugin');
 
@@ -17,26 +19,42 @@ const flags = yargs.parse();
 
 // =============================================================================
 
-const PUBLIC_PATH = '/js/';
 const hashLength = 8;
 const conf = {
+  context: resolve(__dirname, '../'),
   entry: {
     'app': [
       './src/app',
     ],
     'vendor': [
+      'hyperapp',
       'regenerator-runtime/runtime',
+      'svg.js',
     ],
   },
   output: {
-    path: `${ resolve(__dirname, './public') }${ PUBLIC_PATH }`,
-    publicPath: PUBLIC_PATH,
-    filename: `[name]_[chunkhash:${ hashLength }].js`,
+    filename: `./public/js/[name].[chunkhash:${ hashLength }].js`,
+  },
+  module: {
+    rules: [
+      {
+        test: /\.styl$/,
+        use: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: ['css-loader', 'stylus-loader'],
+        }),
+      },
+    ],
   },
   plugins: [
     new TidyPlugin({
       cleanOutput: true,
       hashLength,
+    }),
+    new ExtractTextPlugin(`./public/css/[name].[chunkhash:${ hashLength }].css`),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'vendor',
+      minChunks: Infinity,
     }),
     new WebpackAssetsManifest({
       customize: (key, val) => {
@@ -50,7 +68,13 @@ const conf = {
       writeToDisk: true,
     }),
   ],
+  resolve: {
+    // ensure any symlinked paths resolve to current repo
+    symlinks: false,
+  },
   stats: {
+    chunks: false,
+    colors: true,
     modules: false,
   },
   watch: flags.dev,
