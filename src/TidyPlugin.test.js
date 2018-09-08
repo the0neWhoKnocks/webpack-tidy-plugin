@@ -27,6 +27,10 @@ describe('TidyPlugin', () => {
     fs = require('fs-extra');
     TidyPlugin = require('./TidyPlugin');
 
+    // silence logs
+    jest.spyOn(global.console, 'log');
+    global.console.log.mockImplementation(() => {});
+
     eventCallbacks = {};
     compiler = {
       options: {
@@ -225,17 +229,9 @@ describe('TidyPlugin', () => {
       expect( cb ).not.toHaveBeenCalled();
     });
 
-    it("should throw an error a callback wasn't passed for WP", () => {
+    it("should throw an error if a callback wasn't passed for WP", () => {
       expect( () => { tidyPlugin.clean(); } ).toThrow(
         'No callback provided for async event'
-      );
-    });
-
-    it("should throw an error if paths aren't valid", () => {
-      fs.pathExistsSync.mockReturnValue(false);
-
-      expect( () => { tidyPlugin.clean(cb); } ).toThrow(
-        `Can't find the output path for cleaning. "${ tidyPlugin.outputPath }"`
       );
     });
 
@@ -252,6 +248,12 @@ describe('TidyPlugin', () => {
       expect(fs.emptyDir).toHaveBeenCalledWith(tidyPlugin.outputPath, doneCB);
       expect( cb ).toHaveBeenCalled();
       expect( () => { doneCB(new Error('fake error')); } ).toThrow();
+    });
+
+    it("should act as a pass-through if there's nothing to clean", () => {
+      fs.pathExistsSync.mockReturnValue(false);
+      tidyPlugin.clean(cb);
+      expect( cb ).toHaveBeenCalled();
     });
   });
 });

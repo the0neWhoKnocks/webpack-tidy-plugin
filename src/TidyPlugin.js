@@ -85,21 +85,17 @@ TidyPlugin.prototype = {
     if( this.cleanOutput ){
       if(!cb) throw Error('No callback provided for async event');
 
-      // =======================================================================
-      // Validate path
+      if( fs.pathExistsSync(this.outputPath) ) {
+        console.log(`${ color.green.inverse(' Clean ') } output dir`);
 
-      if( !fs.pathExistsSync(this.outputPath) )
-        throw Error(`Can't find the output path for cleaning. "${ this.outputPath }"`);
-
-      // =======================================================================
-      // Delete files
-
-      console.log(`${ color.green.inverse(' Clean ') } output dir`);
-
-      fs.emptyDir(this.outputPath, (err) => {
-        if(err) throw err;
+        fs.emptyDir(this.outputPath, (err) => {
+          if(err) throw err;
+          cb();
+        });
+      }
+      else{
         cb();
-      });
+      }
     }
   },
 };
