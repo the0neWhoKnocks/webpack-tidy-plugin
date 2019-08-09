@@ -49,6 +49,7 @@ const conf = {
   plugins: [
     new TidyPlugin({
       cleanOutput: true,
+      dryRun: true,
       hashLength,
     }),
     new ExtractTextPlugin(`./public/css/[name].[chunkhash:${ hashLength }].css`),
