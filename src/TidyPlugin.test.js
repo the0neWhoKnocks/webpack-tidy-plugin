@@ -1,7 +1,10 @@
 const crypto = require('crypto');
 
 /**
- * Generates a random hash to simulate WP builds.
+ * Generates a random chunk hash string.
+ *
+ * @param {number} hashLength - Length of the hash
+ * @returns {string}
  */
 function randomHash(hashLength){
   const currDate = (new Date()).valueOf().toString();
@@ -45,7 +48,7 @@ describe('TidyPlugin', () => {
     };
     opts = {
       cleanOutput: true,
-      hashLength: 8,
+      hashLength: 5,
     };
   });
 
@@ -57,7 +60,16 @@ describe('TidyPlugin', () => {
     tidyPlugin = new TidyPlugin(opts);
 
     for( let prop in opts ){
-      expect( tidyPlugin[prop] ).toBeDefined();
+      expect( tidyPlugin.opts[prop] ).toBeDefined();
+    }
+  });
+  
+  it('should allow for overriding default opts', () => {
+    opts.dryRun = true;
+    tidyPlugin = new TidyPlugin(opts);
+
+    for( let prop in opts ){
+      expect( tidyPlugin.opts[prop] ).toBe( opts[prop] );
     }
   });
 
@@ -149,67 +161,85 @@ describe('TidyPlugin', () => {
       afterEmit(compilation, cb);
       expect( fs.unlinkSync ).not.toHaveBeenCalled();
     });
-
-    it('should delete files of the same name but with a non-matching hash', () => {
-      const hash = randomHash(opts.hashLength);
-      const newFile = `app.${ hash }.js`;
-      const newFiles = [
-        newFile,
-        `${ newFile }.map`,
-      ];
-      const origFiles = [
-        'app.1234.js',
-        'app.1234.js.map',
-        'app.5678.js',
-        'app.5678.js.map',
-        ...newFiles,
-      ];
-      const deletedFiles = [];
-      compilation.chunks = [{
-        files: newFiles,
-        hash,
-        rendered: true,
-      }];
-      glob.sync.mockImplementation(
-        (fileName) => origFiles.filter(
-          (file) => (new RegExp(`${ fileName }$`)).test(`${ outputDir }${ file }`)
-        )
-      );
-      fs.unlinkSync.mockImplementation((filePath) => {
-        if( origFiles.includes(filePath) ) deletedFiles.push(filePath);
+    
+    describe('Delete files of the same name but with a non-matching hash', () => {
+      let hash, newFile, newFiles, filesList, deletedFiles;
+      
+      beforeEach(() => {
+        hash = randomHash(opts.hashLength);
+        newFile = `app.${ hash }.js`;
+        newFiles = [
+          newFile,
+          `${ newFile }.map`,
+        ];
+        filesList = [
+          'app.1234.js',
+          'app.1234.js.map',
+          'app.5678.js',
+          'app.5678.js.map',
+          'randomFile.js',
+          ...newFiles,
+        ];
+        deletedFiles = [];
+        compilation.chunks = [{
+          files: newFiles,
+          hash,
+          rendered: true,
+        }];
+        glob.sync.mockImplementation(
+          (fileName) => {
+            const regEx = new RegExp(`${ fileName }$`);
+            return filesList.filter(
+              (file) => (regEx).test(`${ outputDir }${ file }`)
+            );
+          }
+        );
+        fs.unlinkSync.mockImplementation((filePath) => {
+          if( filesList.includes(filePath) ) deletedFiles.push(filePath);
+        });
       });
-
-      // =======================================================================
-      // check that only the new file remains
-
-      afterEmit(compilation, () => {
-        expect( deletedFiles.length ).toBe(4);
-        expect( deletedFiles.includes(newFile) ).toBe(false);
-        expect( deletedFiles.includes(`${ newFile }.map`) ).toBe(false);
+      
+      it('should only delete the old files', () => {
+        afterEmit(compilation, () => {
+          expect( deletedFiles.length ).toBe(4);
+          expect( deletedFiles.includes(newFile) ).toBe(false);
+          expect( deletedFiles.includes(`${ newFile }.map`) ).toBe(false);
+          filesList.slice(0, 4).forEach((deletedFile) => {
+            expect( global.console.log ).toHaveBeenCalledWith(
+              `${ TidyPlugin.LOG__DELETED } ${ deletedFile }`
+            );
+          });
+        });
       });
-
-      // =======================================================================
-      // shouldn't try to delete anything if there aren't any old files
-
-      glob.sync.mockReturnValue([]);
-
-      afterEmit(compilation, () => {
-        expect( deletedFiles.length ).toBe(4);
-        expect( deletedFiles.includes(newFile) ).toBe(false);
-        expect( deletedFiles.includes(`${ newFile }.map`) ).toBe(false);
+      
+      it('should NOT delete files during a dry-run', () => {
+        tidyPlugin.opts.dryRun = true;
+        afterEmit(compilation, () => {
+          expect( deletedFiles.length ).toBe(0);
+          filesList.slice(0, 4).forEach((deletedFile) => {
+            expect( global.console.log ).toHaveBeenCalledWith(
+              `${ TidyPlugin.LOG__DRY_DELETE } ${ deletedFile }`
+            );
+          });
+        });
       });
+      
+      it("should NOT delete anything if there aren't any matching files found", () => {
+        glob.sync.mockReturnValue([]);
+        global.console.log.mockReset();
 
-      // =======================================================================
-      // should handle error thrown on deletion failure
+        afterEmit(compilation, () => {
+          expect( deletedFiles.length ).toBe(0);
+          expect( global.console.log ).not.toHaveBeenCalled();
+        });
+      });
+      
+      it('should handle error thrown on deletion failure', () => {
+        glob.sync.mockReturnValue(['fakeFileError.js']);
+        fs.unlinkSync.mockImplementation(() => { throw new Error('blah'); });
 
-      glob.sync.mockReturnValue(['fakeFileError.js']);
-      fs.unlinkSync.mockImplementation(
-        () => { throw new Error('blah'); }
-      );
-
-      expect( () => {
-        afterEmit(compilation, cb);
-      } ).toThrow();
+        expect( () => { afterEmit(compilation, cb); } ).toThrow();
+      });
     });
   });
 
@@ -219,12 +249,11 @@ describe('TidyPlugin', () => {
     beforeEach(() => {
       cb = jest.fn();
       tidyPlugin = new TidyPlugin(opts);
-      tidyPlugin.cleanOutput = true;
       tidyPlugin.outputPath = outputDir;
     });
 
     it("shouldn't do anything if not enabled", () => {
-      tidyPlugin.cleanOutput = false;
+      tidyPlugin.opts.cleanOutput = false;
       tidyPlugin.clean(cb);
       expect( cb ).not.toHaveBeenCalled();
     });
@@ -254,6 +283,43 @@ describe('TidyPlugin', () => {
       fs.pathExistsSync.mockReturnValue(false);
       tidyPlugin.clean(cb);
       expect( cb ).toHaveBeenCalled();
+    });
+    
+    describe('Dry-Run', () => {
+      let files, globCB;
+      
+      beforeEach(() => {
+        files = [
+          `${ tidyPlugin.outputPath }file1.jpg`,
+          `${ tidyPlugin.outputPath }file2.jpg`,
+          `${ tidyPlugin.outputPath }file3.jpg`,
+        ];
+        fs.pathExistsSync.mockReturnValue(true);
+        glob.mockImplementation((_, cb) => { globCB = cb; });
+        tidyPlugin.opts.dryRun = true;
+      });
+      
+      it('should throw an errror', () => {
+        const err = new Error('Something bad happened');
+        
+        tidyPlugin.clean(cb);
+        
+        expect(() => { globCB(err); }).toThrow(`Dry-run failed | ${ err }`);
+        expect( cb ).not.toHaveBeenCalled();
+      });
+      
+      it('should NOT delete files', () => {
+        tidyPlugin.clean(cb);
+        globCB(null, files);
+        
+        expect( global.console.log ).toHaveBeenCalledWith(
+          `${ TidyPlugin.LOG__DRY_CLEAN } output dir`
+        );
+        expect( global.console.log ).toHaveBeenCalledWith(
+          files.map((file) => `- ${ TidyPlugin.LOG__DRY_DELETE } ${ file }`).join('\n')
+        );
+        expect( cb ).toHaveBeenCalled();
+      });
     });
   });
 });

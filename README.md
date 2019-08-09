@@ -4,7 +4,8 @@
 [![codecov](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/the0neWhoKnocks/webpack-tidy-plugin)
 [![npm version](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin.svg?cb=1)](https://badge.fury.io/js/%40noxx%2Fwebpack-tidy-plugin)
 
-**TL;DR** - Keeps your output directories tidy when outputting files in watch-mode.
+**TL;DR** - Keeps your output directories tidy when outputting files in
+watch-mode (doesn't work when using Webpack's Dev Server).
 
 ![wp-tidy-plugin-01](https://user-images.githubusercontent.com/344140/36881882-82d68602-1d85-11e8-8989-170c5b3f1ed9.gif)
 
@@ -35,28 +36,30 @@ npm i -D @noxx/webpack-tidy-plugin
 
 ## Configuration
 
-| Prop         | Type      | Description |
-| ------------ | --------- | ----------- |
-| `cleanOutput` | `Boolean`  | The output directory will be cleaned out during a one-off build. |
-| `hashLength` | `Number`  | The length of the hash in the bundle name. |
+| Prop         | Type      | Default | Description |
+| ------------ | --------- | ------- | ----------- |
+| `cleanOutput` | `Boolean` | false | The output directory will be cleaned out during a one-off build. |
+| `dryRun` | `Boolean` | false | Will not delete files, just displays info about what could be deleted. |
+| `hashLength` | `Number` | 5 | The length of the hash in the bundle name. |
 
 ```js
 plugins: [
   new TidyPlugin({
     cleanOutput: true,
-    hashLength,
+    dryRun: true,
+    hashLength: 8,
   }),
 ],
 ```
 
-I have a couple [example files](./example) that demonstrate common set-ups.
+I have a couple [example files](./example) that demonstrate common setups.
 - [webpack.config.js](./example/webpack.config.js) utilizes `path`, `publicPath`,
-  and `filename` in the `output` section. This set-up assumes there'll ever only
+  and `filename` in the `output` section. This setup assumes there'll ever only
   be one `output` directory.
 - [webpack.config-nopath.js](./example/webpack.config-nopath.js) allows for a
-  more custom `output` set-up. You'll notice that there's just a `filename`
+  more custom `output` setup. You'll notice that there's just a `filename`
   specified with the output path included. Then the `ExtractTextPlugin` pulls
-  any styles it finds from the `js` files and dumps them in a `css` path.
+  any styles it from the `js` files and dumps them in a `css` path.
 
 ---
 

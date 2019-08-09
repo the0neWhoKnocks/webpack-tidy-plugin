@@ -1,25 +1,30 @@
 const fs = require('fs-extra');
+const { basename } = require('path');
 const color = require('cli-color');
 const glob = require('glob');
 
-/**
- * A plugin for Webpack that keeps source directories clean during a one-off
- * build and while watching for changes.
- *
- * @param {Object} opts - Configuration options
- */
-const TidyPlugin = function({ cleanOutput, hashLength }){
-  this.cleanOutput = cleanOutput;
-  this.hashLength = hashLength;
-};
-
-TidyPlugin.prototype = {
+class TidyPlugin {
+  /**
+   * A plugin for Webpack that keeps source directories clean during a one-off
+   * build and while watching for changes.
+   *
+   * @param {object} opts - Configuration options
+   */
+  constructor(opts) {
+    this.opts = {
+      cleanOutput: false,
+      dryRun: false,
+      hashLength: 5,
+      ...opts,
+    };
+  }
+  
   /**
    * Tap into WP's event system so we know when to delete files.
    *
-   * @param {Object} compiler - The current WP compiler.
+   * @param {object} compiler - The current WP compiler.
    */
-  apply: function(compiler){
+  apply(compiler) {
     // List of event types - https://github.com/webpack/docs/wiki/plugins#the-compiler-instance
 
     // compiler.outputFileSystem - may be useful in determining what can run on
@@ -40,7 +45,7 @@ TidyPlugin.prototype = {
 
           // if file was rendered, find it's older counterpart and kill it
           if( chunk.rendered ){
-            const hash = chunk.hash.slice(0, this.hashLength);
+            const hash = chunk.hash.slice(0, this.opts.hashLength);
 
             // account for all files types that were created
             for(let f=0; f<chunk.files.length; f++){
@@ -51,13 +56,13 @@ TidyPlugin.prototype = {
               if( files.length ){
                 files.forEach((filePath) => {
                   if( !filePath.endsWith(fileName) ){
-                    try {
-                      fs.unlinkSync(filePath);
-                    }catch( err ) {
-                      throw err;
+                    if( this.opts.dryRun ){
+                      console.log(`${ TidyPlugin.LOG__DRY_DELETE } ${ basename(filePath) }`);
                     }
-
-                    console.log(`${ color.green.inverse(' DELETED ') } ${ fileName }`);
+                    else {
+                      fs.unlinkSync(filePath);
+                      console.log(`${ TidyPlugin.LOG__DELETED } ${ basename(filePath) }`);
+                    }
                   }
                 });
               }
@@ -68,36 +73,48 @@ TidyPlugin.prototype = {
         cb();
       });
     }
-    else{
+    else {
       // run is called for one-off build
       compiler.plugin('run', (compiler, cb) => this.clean(cb));
     }
-  },
+  }
 
   /**
-   * Delets contents of provided file paths. Utilized during the first run of
+   * Deletes contents of provided file paths. Utilized during the first run of
    * the WebPack build to ensure there aren't any leftover generated files.
    *
    * @param {Function} cb - This is called during `async` events which need to
    * have a callback called in order to proceed.
    */
-  clean: function(cb){
-    if( this.cleanOutput ){
+  clean(cb) {
+    if( this.opts.cleanOutput ){
       if(!cb) throw Error('No callback provided for async event');
 
       if( fs.pathExistsSync(this.outputPath) ) {
-        console.log(`${ color.green.inverse(' Clean ') } output dir`);
-
-        fs.emptyDir(this.outputPath, (err) => {
-          if(err) throw err;
-          cb();
-        });
+        console.log(`${ this.opts.dryRun ? TidyPlugin.LOG__DRY_CLEAN : TidyPlugin.LOG__CLEAN } output dir`);
+        
+        if( this.opts.dryRun ){
+          glob(`${ this.outputPath }/**`, (err, files) => {
+            if (err) throw Error(`Dry-run failed | ${ err }`);
+            console.log( files.map((file) => `- ${ TidyPlugin.LOG__DRY_DELETE } ${ file }`).join('\n') );
+            cb();
+          });
+        }
+        else {
+          fs.emptyDir(this.outputPath, (err) => {
+            if(err) throw err;
+            cb();
+          });
+        }
       }
-      else{
-        cb();
-      }
+      else cb();
     }
-  },
-};
+  }
+}
+
+TidyPlugin.LOG__CLEAN = color.green.inverse(' CLEAN ');
+TidyPlugin.LOG__DELETED = color.green.inverse(' DELETED ');
+TidyPlugin.LOG__DRY_CLEAN = color.bold.black.inverse(' CLEAN ');
+TidyPlugin.LOG__DRY_DELETE = color.bold.black.inverse(' DELETE ');
 
 module.exports = TidyPlugin;
