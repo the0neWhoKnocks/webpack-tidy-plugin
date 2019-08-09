@@ -35,9 +35,9 @@
     "glob": "^7.1.2"
   },
   "devDependencies": {
-    "@noxx/eslint-config": "^1.0.1",
+    "@noxx/eslint-config": "^2.0.1",
     "coveralls": "^3.0.0",
-    "eslint": "^4.18.1",
+    "eslint": "^6.1.0",
     "jest": "^22.4.2"
   }
 }

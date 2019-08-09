@@ -10,4 +10,5 @@ example/
 .npmignore
 .travis.yml
 CONTRIBUTING.md
+TODO.md
 src/**/*.test.js
