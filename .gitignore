@@ -5,3 +5,4 @@
 .assets/
 coverage/
 node_modules/
+mockOutput/

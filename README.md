@@ -15,9 +15,9 @@ but don't want to have those assets served via the Webpack server. Well, you'll
 most likely have WP output a manifest with the generated files, and the server
 will read from that to load the most current hashed bundle.
 
-The catch to the above set-up, is that you'll end up with a folder full of
+The catch to the above setup, is that you'll end up with a folder full of
 generated files while in watch mode, or when you run a one-off build (say for
-production) you may have some straggling files from a previous dev session.
+production) you may have some straggling files from a previous Dev session.
 
 This plugin will ensure that there's only ever one version of the current bundle
 in your output directories.
@@ -38,14 +38,12 @@ npm i -D @noxx/webpack-tidy-plugin
 
 | Prop         | Type      | Default | Description |
 | ------------ | --------- | ------- | ----------- |
-| `cleanOutput` | `Boolean` | false | The output directory will be cleaned out during a one-off build. |
-| `dryRun` | `Boolean` | false | Will not delete files, just displays info about what could be deleted. |
-| `hashLength` | `Number` | 5 | The length of the hash in the bundle name. |
+| `dryRun` | `Boolean` | `false` | Will not delete files, just displays info about what could be deleted. |
+| `hashLength` | `Number` | `5` | The length of the hash in the bundle name. |
 
 ```js
 plugins: [
   new TidyPlugin({
-    cleanOutput: true,
     dryRun: true,
     hashLength: 8,
   }),
@@ -59,7 +57,7 @@ I have a couple [example files](./example) that demonstrate common setups.
 - [webpack.config-nopath.js](./example/webpack.config-nopath.js) allows for a
   more custom `output` setup. You'll notice that there's just a `filename`
   specified with the output path included. Then the `ExtractTextPlugin` pulls
-  any styles it from the `js` files and dumps them in a `css` path.
+  any styles from the `js` files and dumps them in a `css` path.
 
 ---
 

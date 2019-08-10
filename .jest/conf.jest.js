@@ -5,7 +5,6 @@ const conf = {
   collectCoverage: true,
   collectCoverageFrom: [
     'src/**/*.{js}',
-    '!**/coverage/**',
   ],
   coverageReporters: [
     'html',

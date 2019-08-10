@@ -3,6 +3,7 @@
 .jest/
 coverage/
 example/
+mockOutput/
 
 # Files
 .eslintignore
