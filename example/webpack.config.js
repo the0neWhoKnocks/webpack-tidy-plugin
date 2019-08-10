@@ -35,7 +35,6 @@ const conf = {
   },
   plugins: [
     new TidyPlugin({
-      cleanOutput: true,
       dryRun: true,
       hashLength,
     }),
