@@ -36,7 +36,6 @@
   },
   "devDependencies": {
     "@noxx/eslint-config": "^2.0.1",
-    "coveralls": "^3.0.0",
     "eslint": "^6.1.0",
     "jest": "^22.4.2",
     "mkdirp": "^0.5.1"
